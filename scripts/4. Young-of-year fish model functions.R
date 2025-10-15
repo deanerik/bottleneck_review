@@ -333,8 +333,8 @@ get.winter <- function(tempSeries){
         # end portion of a year (June 21 to Dec 31)
         yearEnd <- tempSeries$temp[tempSeries$year == years[index]][172:365]
 
-        # start portion of next year (Jan 1 to June 21)
-        yearStart <- tempSeries$temp[tempSeries$year == years[index+1]][1:172]
+        # start portion of next year (Jan 1 to July 21) that should contain winter's end
+        yearStart <- tempSeries$temp[tempSeries$year == years[index+1]][1:202]
 
         # combine it
         winterRun <- c(yearEnd,yearStart)

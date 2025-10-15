@@ -951,10 +951,6 @@ timeDat.n <- cbind(timeDat.n,
                             0.4,0.4,0.4
                             ))
 
-# this theoretical point occurs BEFORE the spawning window so remove it (it looks too crowded anyway)
-# it's the theoretical LES if conditions could allow them to spawn early enough
-timeDat.n$value[4] <- NA
-timeDat.n$label[4] <- NA
 
 # !! NOTICE
 # there are years where spawning doesn't happen at all

@@ -231,8 +231,7 @@ nipP <- ggplot(nipigon,    aes(x=size, fill=factor(type, levels = c("Baseline","
               axis.title.y = element_blank()) +
                  labs(x = "Total Length (cm)", y = "Probability Density") +
                  scale_fill_manual(values=c(pre, post50, post100)) +
-                 # error in some winter length calcs, fixed in next script
-                 geom_vline(aes(xintercept=baseline$nipigon$theoryMin[-c(2,4,8,9)] %>% mean), color=preL, linetype="dashed", size=0.75) +
+                 geom_vline(aes(xintercept=baseline$nipigon$theoryMin %>% mean), color=preL, linetype="dashed", size=0.75) +
                  geom_vline(aes(xintercept=future$nipigon[future$nipigon$year %in% 2040:2050,"theoryMin"] %>% mean), color=post50L, linetype="dashed", size=0.75) +
                  geom_vline(aes(xintercept=future$nipigon[future$nipigon$year %in% 2090:2099,"theoryMin"] %>% mean), color=post100L, linetype="dashed", size=0.75)
 #307, 1766
