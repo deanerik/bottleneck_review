@@ -187,7 +187,12 @@ get.Range <- function(tempArrayOG){
     # for the start of winter (which occurs at end of year)
     # guarding against cold spells making a false start of winter 
 
-    # repeat until 5 days days following days also below the winter threshold
+    # IF it ever gets so hot that there's no day less than 10 
+    if(identical(startpoint,integer(0))){
+
+        startpoint <- length(tempArray) } 
+
+# repeat until 5 consecutive days also below the winter threshold
     # keep looping to find a correct stretch so long as all 5 are NOT winter temperatures 
     while( (tempArray < winterTemp)[startpoint:(startpoint+4)] %>% all != TRUE) {
 
@@ -202,7 +207,7 @@ get.Range <- function(tempArrayOG){
         startpoint <- (range5)[checkpoint]+1
 
         # and if you hit the end of the series, finding nothing, then stop
-        if(startpoint == length(tempArray)) break
+        if(startpoint >= length(tempArray)) break
 
     }
 
@@ -211,8 +216,8 @@ get.Range <- function(tempArrayOG){
     # get the index of the first warm day (crossing temperature threshold) 
     endpoint <- (startpoint-1) + (tempArray[startpoint:length(tempArray)] > winterTemp) %>% which %>% head(1)
 
-    # if there's no start of winter, then log a negligble day
-    if(identical(endpoint,numeric(0))){
+    # if there's no start of winter, then log a negligble day (updated OR clause Jan 2026)
+    if(identical(endpoint,numeric(0)) | endpoint-startpoint < 4){
 
         tempArray <- 0
         startpoint <- 1

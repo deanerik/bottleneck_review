@@ -254,7 +254,10 @@ genP <- ggplot(genesee,    aes(x=size, fill=factor(type, levels = c("Baseline","
                  scale_fill_manual(values=c(pre, post50, post100)) +
                  geom_vline(aes(xintercept=baseline$genesee$theoryMin %>% mean), color=preL, linetype="dashed", size=0.75) +
                  geom_vline(aes(xintercept=future$genesee[future$genesee$year %in% 2040:2050,"theoryMin"] %>% mean), color=post50L, linetype="dashed", size=0.75) +
-                 geom_vline(aes(xintercept=future$genesee[future$genesee$year %in% 2090:2099,"theoryMin"] %>% mean), color=post100L, linetype="dashed", size=0.75)
+                 geom_vline(aes(xintercept=future$genesee[future$genesee$year %in% 2090:2099,"theoryMin"] %>% mean), color=post100L, linetype="dashed", size=0.75) +
+                 geom_segment(aes(x=41.2, xend=41.2, y=0.06,  yend=.07), color=preL, linetype="dashed", size=0.55) +
+                 geom_segment(aes(x=41.2, xend=41.2, y=0.048, yend=.059),  color=post50L, linetype="dashed", size=0.55) +
+                 geom_segment(aes(x=41.2, xend=41.2, y=0.037,  yend=.048), color=post100L, linetype="dashed", size=0.55)
 # 225, 1495
 louP <- ggplot(stlouis,    aes(x=size, fill=factor(type, levels = c("Baseline","2050","2100")))) +
     # middle chunk same for everyone
@@ -307,7 +310,7 @@ all4 <- plot_grid(nipP, genP, louP, vermP,
                   nrow = 2)
 #
 outPlot <- grid.arrange(arrangeGrob(all4, left = y.grob, bottom = x.grob))
-
+#
 # save plot
 ggsave(plot = outPlot, filename = "all4.png", path = "../graphics", bg = "white", width = 9, height = 6)
 
@@ -338,7 +341,10 @@ nipP <- ggplot(nipigon,    aes(x=bday, fill=factor(type, levels = c("Baseline","
                  geom_vline(aes(xintercept=baseline$nipigon$lastBday %>% mean), color=preL, linetype="dashed", size=0.75) +
                  geom_vline(aes(xintercept=future$nipigon[future$nipigon$year %in% 2040:2050,"lastBday"] %>% mean), color=post50L, linetype="dashed", size=0.75) +
                  geom_vline(aes(xintercept=future$nipigon[future$nipigon$year %in% 2090:2099,"lastBday"] %>% mean), color=post100L, linetype="dashed", size=0.75) +
-                 guides(color = guide_legend(override.aes = list(size = 0.5)))
+                 guides(color = guide_legend(override.aes = list(size = 0.5))) +
+                 geom_segment(aes(x=303, xend=303, y=0.022,  yend=.0266), color=preL, linetype="dashed", size=0.5) +
+                 geom_segment(aes(x=303, xend=303, y=0.017, yend=.021),  color=post50L, linetype="dashed", size=0.5) +
+                 geom_segment(aes(x=303, xend=303, y=0.0115,  yend=.0165), color=post100L, linetype="dashed", size=0.5)
 #
 genP <- ggplot(genesee,    aes(x=bday, fill=factor(type, levels = c("Baseline","2050","2100")))) +
     # middle chunk same for everyone
@@ -414,7 +420,7 @@ all4 <- plot_grid(nipP, louP, genP, vermP,
                   nrow = 4)
 #
 outPlot <- grid.arrange(arrangeGrob(all4, left = y.grob, bottom = x.grob))
-
+#
 # save plot
 ggsave(plot = outPlot, filename = "allBday.png", path = "../graphics", bg = "white", width = 6, height = 9)
 
@@ -427,14 +433,14 @@ ggsave(plot = outPlot, filename = "allBday.png", path = "../graphics", bg = "whi
 # arrange survival stats for plotting
 perSpaSurv <- rbind(
                     cbind(percent = future[[2]][["percentSpawnSurvive"]], year = 2015:2099, type = "Nipigon"),
-                    cbind(percent = future[[3]][["percentSpawnSurvive"]], year = 2015:2099, type = "St. Louis"),
-                    cbind(percent = future[[1]][["percentSpawnSurvive"]], year = 2015:2099, type = "Genesee"),
-                    cbind(percent = future[[4]][["percentSpawnSurvive"]], year = 2015:2099, type = "Vermillion"),
+                    cbind(percent = future[[3]][["percentSpawnSurvive"]], year = 2025:2099, type = "St. Louis"),
+                    cbind(percent = future[[1]][["percentSpawnSurvive"]], year = 2025:2099, type = "Genesee"),
+                    cbind(percent = future[[4]][["percentSpawnSurvive"]], year = 2025:2099, type = "Vermillion"),
                     # add in baseline values
                     cbind(percent = baseline$nipigon$percentSpawnSurvive, year = 2000:2008, type = "Nipigon"),
-                    cbind(percent = baseline$stlouis$percentSpawnSurvive, year = 2012:2013, type = "St. Louis"),
-                    cbind(percent = baseline$genesee$percentSpawnSurvive, year = 2011:2012, type = "Genesee"),
-                    cbind(percent = baseline$vermillion$percentSpawnSurvive, year = 2012:2013, type = "Vermillion")
+                    cbind(percent = baseline$stlouis$percentSpawnSurvive, year = 2012:2024, type = "St. Louis"),
+                    cbind(percent = baseline$genesee$percentSpawnSurvive, year = 2011:2024, type = "Genesee"),
+                    cbind(percent = baseline$vermillion$percentSpawnSurvive, year = 2012:2024, type = "Vermillion")
                     ) %>% as.data.frame
 
 # coerce data back to numeric type 
@@ -445,7 +451,6 @@ perSpaSurv[,2] <- perSpaSurv[,2] %>% as.numeric
 perSpaSurv$type <- factor(perSpaSurv$type, levels = c("Nipigon", "St. Louis", "Genesee", "Vermillion"))
 
 # scatterplot of trends with regression lines
-
 surPlot <- ggplot(perSpaSurv, aes(x = year, y = percent, color = type, shape = type)) +
            geom_point(show.legend = T) +
            ylim(0,.91) +
@@ -465,14 +470,98 @@ surPlot <- ggplot(perSpaSurv, aes(x = year, y = percent, color = type, shape = t
                  legend.text = element_text(size = 10)
                  ) +
            labs(x = "Year", y = "Effective spawning proportion") +
-           geom_vline(aes(xintercept=2014), color="gray45", linetype="dashed", size=0.45) +
-           guides(color = guide_legend(override.aes = list(size = 3)))
-
+           #geom_vline(aes(xintercept=2024.5), color="gray45", linetype="dashed", size=0.45, ) +
+           geom_segment(aes(x=2024.5, xend=2024.5, y=0.34, yend=.9), color="gray45", linetype="dashed", size=0.45) +
+           geom_segment(aes(x=2009, xend=2009, y=0, yend=.22), color="gray45", linetype="dashed", size=0.45) +
+           geom_segment(aes(x=2009, xend=2024.5, y=0.22, yend=.34), color="gray45", linetype="dashed", size=0.45) +
+           guides(color = guide_legend(override.aes = list(size = 3))) +
+           annotate("text", x = 2010.5, y = .89, label ="Baseline period", size = 3, color = "gray45")
+          
 # save plot
 ggsave(plot = surPlot, filename = "allSur4.png", path = "../graphics", bg = "white", width = 5, height = 6)
 
 # as eps
 #ggsave(plot = surPlot, filename = "allSur4.eps", path = "../graphics", device = cairo_ps, bg = "white", width = 5, height = 6, fallback_resolution = 600)
+
+
+
+
+
+
+
+
+
+
+
+#  ---- ALTERNATE: EACH INDIVIDUAL GCM VERSION of "Percent cohort survival plot" --------------------------------
+
+# NOTE: not really any good
+ 
+# extract individual GCM survival percentage values
+all.nip <- nipSummary %>% lapply(.,function(x){data.frame(year = 2015:2099, percent= x$percentSpawnSurvive)}) 
+all.nip  <- melt(all.nip, value.name = "percent", id = "year" )[,-2]
+names(all.nip)[3] <- "type"
+all.nip$type  <- "Nipigon"
+#
+all.slou <- slouSummary %>% lapply(.,function(x){data.frame(year = 2025:2099, percent= x$percentSpawnSurvive)}) 
+all.slou  <- melt(all.slou, value.name = "percent", id = "year" )[,-2]
+names(all.slou)[3] <- "type"
+all.slou$type  <- "St. Louis"
+#
+all.gen <- genSummary %>% lapply(.,function(x){data.frame(year = 2025:2099, percent= x$percentSpawnSurvive)}) 
+all.gen  <- melt(all.gen, value.name = "percent", id = "year" )[,-2]
+names(all.gen)[3] <- "type"
+all.gen$type  <- "Genesee"
+#
+all.verm <- vermSummary %>% lapply(.,function(x){data.frame(year = 2025:2099, percent= x$percentSpawnSurvive)}) 
+all.verm  <- melt(all.verm, value.name = "percent", id = "year" )[,-2]
+names(all.verm)[3] <- "type"
+all.verm$type  <- "Vermillion"
+
+# arrange survival stats for plotting
+perSpaSurv2 <- rbind(all.nip, all.slou, all.gen, all.verm, 
+                     # and baseline values
+                     cbind(percent = baseline$nipigon$percentSpawnSurvive, year = 2000:2008, type = "Nipigon"),
+                     cbind(percent = baseline$stlouis$percentSpawnSurvive, year = 2012:2024, type = "St. Louis"),
+                     cbind(percent = baseline$genesee$percentSpawnSurvive, year = 2011:2024, type = "Genesee"),
+                     cbind(percent = baseline$vermillion$percentSpawnSurvive, year = 2012:2024, type = "Vermillion")
+                     ) %>% as.data.frame
+
+
+# coerce data back to numeric type 
+perSpaSurv2[,1] <- perSpaSurv2[,1] %>% as.numeric
+perSpaSurv2[,2] <- perSpaSurv2[,2] %>% as.numeric
+
+# Set the order of types so the legend, and color scheme, goes north to south
+perSpaSurv2$type <- factor(perSpaSurv2$type, levels = c("Nipigon", "St. Louis", "Genesee", "Vermillion"))
+
+# scatterplot of trends with regression lines
+surPlot2 <- ggplot(perSpaSurv2, aes(x = year, y = percent, color = type, shape = type)) +
+           geom_point(show.legend = T) +
+           ylim(0,.91) +
+           scale_fill_discrete(breaks = c("Nipigon","St. Louis", "Genesee", "Vermillion")) +
+           scale_shape_manual(values=c(16,15,18,17)) +
+           scale_color_viridis(option = "C", begin = 0.01, end = 0.8, discrete = T) +
+           # this line has the exact color codes, if needed
+           #scale_color_manual(values = rev(c("#FFAC5A", "#D9456E", "#8A00A2", "#101186"))) +
+           geom_smooth(method = "lm", se=F, show.legend = F, linewidth = 0.5, linetype = 1) +
+           theme_classic() + 
+           theme(axis.text.x = element_text(size = 9),
+                 axis.text.y = element_text(size = 9),
+                 axis.title.x = element_text(size = 13),
+                 axis.title.y = element_text(size = 13, vjust = 2),
+                 legend.position = c(0.85, 0.3),
+                 legend.title = element_blank(),
+                 legend.text = element_text(size = 10)
+                 ) +
+           labs(x = "Year", y = "Effective spawning proportion") +
+           #geom_vline(aes(xintercept=2024.5), color="gray45", linetype="dashed", size=0.45, ) +
+           geom_segment(aes(x=2024.5, xend=2024.5, y=0.34, yend=.9), color="gray45", linetype="dashed", size=0.45) +
+           geom_segment(aes(x=2009, xend=2009, y=0, yend=.22), color="gray45", linetype="dashed", size=0.45) +
+           geom_segment(aes(x=2009, xend=2024.5, y=0.22, yend=.34), color="gray45", linetype="dashed", size=0.45) +
+           guides(color = guide_legend(override.aes = list(size = 3))) +
+           annotate("text", x = 2010.5, y = .89, label ="Baseline period", size = 3, color = "gray45")
+
 
 
 

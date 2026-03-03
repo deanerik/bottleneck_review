@@ -15,12 +15,12 @@ options(scipen = 100, digits = 4)
 
 #---- 1. Run model on baseline data --------------------------------------------
 
-# load historical water temperature data from Jones et al. 2017
-g.temp <- read.csv("../data/gBaseline.csv")
+# load historical water temperature data from Jones et al. 2017 & USGS 
 n.temp <- read.csv("../data/nBaseline.csv")
-s.temp <- read.csv("../data/sBaseline.csv")
-v.temp <- read.csv("../data/vBaseline.csv")
- 
+s.temp <- read.csv("../data/sBaseline2.csv")
+g.temp <- read.csv("../data/gBaseline2.csv")
+v.temp <- read.csv("../data/vBaseline2.csv")
+
 # package all the baseline results together
 baseline <- list(genesee    = get.results(g.temp),
                  nipigon    = get.results(n.temp),
@@ -54,7 +54,7 @@ library(magrittr)
 
 # air-to-water conversion function, based on zeroed Thames River air temps
 mod.temp2 <- function(x){ 
-    y <- .927 * x + 2.952
+    y <- .761 * x + 6.028
     return(y)
 }
 
@@ -70,11 +70,12 @@ gcm.names <- unique(gcm.data$gcm)
 # vector of names to identify each tributary 
 trib.names <- unique(gcm.data$tributary)
 
+# convert air temperatures to water temperatures
+gcm.data$tas <- mod.temp2(gcm.data$tas)
+
 # adjust negative air temperatures to zero
 gcm.data$tas[which(gcm.data$tas < 0)] <- 0
 
-# convert air temperatures to water temperatures
-gcm.data$tas <- mod.temp2(gcm.data$tas)
 
 
 # — — — — — — — — — — — — — — — — — — — — — — — — — — — — — — — — — — — — — —
@@ -147,11 +148,17 @@ slouSummary <- lapply(trib.mods[[2]], get.results)
  genSummary <- lapply(trib.mods[[3]], get.results) 
  nipSummary <- lapply(trib.mods[[4]], get.results) 
 
+# remove GCM data for 2015-2025, as that's covered in baseline analyses 
+# (except for nipigon, as it's baseline doesn't overlap with GCM years)
+vermSummary <- lapply(vermSummary, function(x){x[-1:-10,]})
+slouSummary <- lapply(slouSummary, function(x){x[-1:-10,]})
+ genSummary <- lapply(genSummary , function(x){x[-1:-10,]})
+
 # function to average results between GCM outputs per tributary
-mean.gcm <- function(tributary.data) {
+mean.gcm <- function(tributary.data, yearRange) {
                          
     # data frame to filled with averaged results
-    output <- data.frame(year = 2015:2099)
+    output <- data.frame(year = yearRange)
 
     # loop across results from 2nd to 13th columns (1st is just year) 
     for (column in 2:13) {
@@ -174,10 +181,10 @@ mean.gcm <- function(tributary.data) {
 }
 
 # compute the average results for each tributary & put together in a list
-future <- list(genesee    = mean.gcm(genSummary), 
-               nipigon    = mean.gcm(nipSummary),
-               stlouis    = mean.gcm(slouSummary),
-               vermillion = mean.gcm(vermSummary)
+future <- list(genesee    = mean.gcm(genSummary, 2025:2099), 
+               nipigon    = mean.gcm(nipSummary, 2015:2099),
+               stlouis    = mean.gcm(slouSummary, 2025:2099),
+               vermillion = mean.gcm(vermSummary, 2025:2099)
 )
 
 #---- 3. Reshape data for export ----------------------------------------------
@@ -195,3 +202,6 @@ output <- rbind(baselineOutput,futureOutput)
 
 # export results
 write.csv(output, "../results/results.csv", row.names = FALSE)
+
+
+

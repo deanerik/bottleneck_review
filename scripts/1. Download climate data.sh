@@ -59,7 +59,7 @@
 #   CMIP6.INM_CM5_0.r1i1p1f1        |   49
 #   CMIP6.UKESM1_0_LL.r1i1p1f2      |   64
 
-#   80% variation captured for scenario ssp5: 85
+#   80% variation captured for scenario ssp5:8.5
 
 # PROCEDURE
 # ------------------------------------------------------------------------------
@@ -68,7 +68,7 @@
 #          or just interact poorly with certain networks (e.g. university wifi).
 #          If things do not seem to work for you, 
 #          try using a VPN, 
-#          try again later,
+#          try again later from a different network,
 #          or check if the repository has moved / URLs have changed
 #          by navigating to the data from the root: 
 #          ( https://www.nccs.nasa.gov/services/data-collections/land-based-products/nex-gddp-cmip6 )
@@ -177,6 +177,6 @@ for n in {2015..2100}; do
 
 done
 
-# An alternative option:
-#   a faster parallel download using GNU parallel on 8 cores, but requires escaping `&` and `?` characters in the URL:
+# An example line for an alternative option, if interested:
+#   a faster parallel download using GNU parallel on 8 cores (but requires escaping `&` and `?` characters in the URL)
 #   parallel -a <(seq 2015 2100) -P 8 wget "https://ds.nccs.nasa.gov/thredds2/ncss/AMES/NEX/GDDP-CMIP6/EC-Earth3-Veg-LR/ssp585/r1i1p1f1/tas/tas_day_EC-Earth3-Veg-LR_ssp585_r1i1p1f1_gr_{1}.nc\?var=tas\&north=41.55\&west=277.5\&east=277.6\&south=41.5\&disableProjSubset=on\&horizStride=1\&time_start={1}-01-01T12%3A00%3A00Z\&time_end={1}-12-31T12%3A00%3A00Z\&timeStride=1\&addLatLon=true" -O "ecEarth3/v{1}.nc" 

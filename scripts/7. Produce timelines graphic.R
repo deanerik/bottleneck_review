@@ -60,17 +60,17 @@ spawn.dates <- rbind(
                      subset(results$nipigon, 2090 <= year & year <= 2099)[c("spawnDaysRange1", "lastBday", "spawnDaysRange2")] %>% colMeans %>% round(0),
 
                      # ST LOUIS
-                     subset(results$stlouis, year < 2015)[c("spawnDaysRange1", "lastBday", "spawnDaysRange2")] %>% colMeans(na.rm = T) %>% round(0),
+                     subset(results$stlouis, year < 2025)[c("spawnDaysRange1", "lastBday", "spawnDaysRange2")] %>% colMeans(na.rm = T) %>% round(0),
                      subset(results$stlouis, 2040 <= year & year <= 2050)[c("spawnDaysRange1", "lastBday", "spawnDaysRange2")] %>% colMeans %>% round(0),
                      subset(results$stlouis, 2090 <= year & year <= 2099)[c("spawnDaysRange1", "lastBday", "spawnDaysRange2")] %>% colMeans %>% round(0),
 
                      # GENESEE
-                     subset(results$genesee, year < 2015)[c("spawnDaysRange1", "lastBday", "spawnDaysRange2")] %>% colMeans(na.rm = T) %>% round(0),
+                     subset(results$genesee, year < 2025)[c("spawnDaysRange1", "lastBday", "spawnDaysRange2")] %>% colMeans(na.rm = T) %>% round(0),
                      subset(results$genesee, 2040 <= year & year <= 2050)[c("spawnDaysRange1", "lastBday", "spawnDaysRange2")] %>% colMeans %>% round(0),
                      subset(results$genesee, 2090 <= year & year <= 2099)[c("spawnDaysRange1", "lastBday", "spawnDaysRange2")] %>% colMeans %>% round(0),
 
                      # VERMILLION
-                     subset(results$vermillion, year < 2015)[c("spawnDaysRange1", "lastBday", "spawnDaysRange2")] %>% colMeans(na.rm = T) %>% round(0),
+                     subset(results$vermillion, year < 2025)[c("spawnDaysRange1", "lastBday", "spawnDaysRange2")] %>% colMeans(na.rm = T) %>% round(0),
                      subset(results$vermillion, 2040 <= year & year <= 2050)[c("spawnDaysRange1", "lastBday", "spawnDaysRange2")] %>% colMeans %>% round(0),
                      subset(results$vermillion, 2090 <= year & year <= 2099)[c("spawnDaysRange1", "lastBday", "spawnDaysRange2")] %>% colMeans %>% round(0)
 )
@@ -90,21 +90,29 @@ gcm.data <- read.csv("../data/gcmOutputs.csv")
 
 # air-to-water conversion function, based on zeroed Thames River air temps
 mod.temp2 <- function(x){ 
-    y <- .927 * x + 2.952
+    y <- .761 * x + 6.028
+    #y <- .927 * x + 2.952
     return(y)
 }
-
-# adjust negative air temperatures to zero
-gcm.data$tas[which(gcm.data$tas < 0)] <- 0
 
 # convert air temperatures to water temperatures
 gcm.data$tas <- mod.temp2(gcm.data$tas)
 
+# adjust negative air temperatures to zero
+gcm.data$tas[which(gcm.data$tas < 0)] <- 0
+
+
 # load data for baseline years
-g.temp <- read.csv("../data/gBaseline.csv")
 n.temp <- read.csv("../data/nBaseline.csv")
-s.temp <- read.csv("../data/sBaseline.csv")
-v.temp <- read.csv("../data/vBaseline.csv")
+g.temp <- read.csv("../data/gBaseline2.csv")
+s.temp <- read.csv("../data/sBaseline2.csv")
+v.temp <- read.csv("../data/vBaseline2.csv")
+
+# we have baseline data that overlaps some early GCM data, so determine which rows are redundant 
+overlapGCM <- c(which(gcm.data$year %in% 2012:2025 & gcm.data$tributary %in% c("slou", "verm") ), which(gcm.data$year %in% 2011:2025 & gcm.data$tributary == "gen") )
+
+# then remove them
+gcm.data <- gcm.data[-overlapGCM, ]
 
 # wrap it all together
 waterC <- rbind(
@@ -114,6 +122,7 @@ waterC <- rbind(
                 data.frame(year = v.temp$year, j.date = v.temp$j.date, tributary = "verm", tas = v.temp$temp, gcm = "base"),
                 gcm.data
 )
+
 
 
 # — — — — — — — — — — — — — — — — — — — — — — — — — — — — — — — — — — — — — — —
@@ -185,16 +194,12 @@ whenGDD <- function(tempSeries,
 
 
 
-
-
-
-
-
 # ——————————————————————————————————————————————————————————————————————————————
 
 # EXAMPLE & COMPARISON:
 
 # for BASELINE: 
+# ~~~~~~~~~~~~~
  
 # using the core function to get maturation date per annum 
 get.gdd(subset(n.temp, year == 2000, select = c("j.date", "temp")))
@@ -208,49 +213,49 @@ get.gdd(subset(n.temp, year == 2007, select = c("j.date", "temp")))
 get.gdd(subset(n.temp, year == 2008, select = c("j.date", "temp")))
 get.gdd(subset(n.temp, year == 2009, select = c("j.date", "temp")))
 
-# using the wrapper to streamline the process
+# using the wrapper to streamline the process (this averages across each individual year in the baseline data series)
 whenGDD(waterC, 1, "nip")
 
 # for FUTURE:
+# ~~~~~~~~~~
 
 # Load the data
 tribData <- read.csv("../data/tribData.csv")
 
 # just working with one year at a time 
 c(
- get.gdd(subset(tribData, year == 2015 & tributary == "verm", select = c( "j.date", "ecEarth3" ))),
- get.gdd(subset(tribData, year == 2015 & tributary == "verm", select = c( "j.date", "hadGEM3"  ))),
- get.gdd(subset(tribData, year == 2015 & tributary == "verm", select = c( "j.date", "inmCM5"   ))),
- get.gdd(subset(tribData, year == 2015 & tributary == "verm", select = c( "j.date", "mriESM2"  ))),
- get.gdd(subset(tribData, year == 2015 & tributary == "verm", select = c( "j.date", "ukESM1"   )))
+ get.gdd(subset(tribData, year == 2030 & tributary == "verm", select = c( "j.date", "ecEarth3" ))),
+ get.gdd(subset(tribData, year == 2030 & tributary == "verm", select = c( "j.date", "hadGEM3"  ))),
+ get.gdd(subset(tribData, year == 2030 & tributary == "verm", select = c( "j.date", "inmCM5"   ))),
+ get.gdd(subset(tribData, year == 2030 & tributary == "verm", select = c( "j.date", "mriESM2"  ))),
+ get.gdd(subset(tribData, year == 2030 & tributary == "verm", select = c( "j.date", "ukESM1"   )))
 )  
 
 # and using the wrapper (gets the mean value)
-whenGDD(waterC, 0, "verm", 2015)
+whenGDD(waterC, 0, "verm", 2030)
 
 # ——————————————————————————————————————————————————————————————————————————————
-
 # baseline, 2050, 2100
  
 # Nipigon
-whenGDD(waterC, 1, "nip") %>% mean
-whenGDD(waterC, 0, "nip", 2040:2050) %>% mean
-whenGDD(waterC, 0, "nip", 2090:2099) %>% mean
+whenGDD(waterC, 1, "nip") 
+whenGDD(waterC, 0, "nip", 2040:2050) 
+whenGDD(waterC, 0, "nip", 2090:2099) 
 
 # St Louis 
-whenGDD(waterC, 1, "slou") %>% mean
-whenGDD(waterC, 0, "slou", 2040:2050) %>% mean
-whenGDD(waterC, 0, "slou", 2090:2099) %>% mean
+whenGDD(waterC, 1, "slou") 
+whenGDD(waterC, 0, "slou", 2040:2050)
+whenGDD(waterC, 0, "slou", 2090:2099)
 
 # Genesee
-whenGDD(waterC, 1, "gen") %>% mean
-whenGDD(waterC, 0, "gen", 2040:2050) %>% mean
-whenGDD(waterC, 0, "gen", 2090:2099) %>% mean
+whenGDD(waterC, 1, "gen") 
+whenGDD(waterC, 0, "gen", 2040:2050)
+whenGDD(waterC, 0, "gen", 2090:2099)
 
 # Vermillion
-whenGDD(waterC, 1, "verm") %>% mean
-whenGDD(waterC, 0, "verm", 2040:2050) %>% mean
-whenGDD(waterC, 0, "verm", 2090:2099) %>% mean
+whenGDD(waterC, 1, "verm") 
+whenGDD(waterC, 0, "verm", 2040:2050) 
+whenGDD(waterC, 0, "verm", 2090:2099) 
 
 
 # — — — — — — — — — — — — — — — — — — — — — — — — — — — — — — — — — — — — — — —
@@ -327,13 +332,14 @@ get.winterDates <- function(tempArrayOG){
 }
 
 # outputs 161 323
+# now 173 296
 get.winterDates(trib.mods$verm[[1]][130:565,2])
 
 # start ordinal example
-130+161-1
+130+173-1
 
 # end ordinal (next year) example
-130+323-365
+130+296-365
 
 # From the indices, extract the actual ordinal dates
 # ALWAYS put the index for the equivalent of the 200th ordinal date
@@ -372,6 +378,11 @@ get.Range2 <- function(tempArrayOG){
     startpoint <- (tempArray < winterTemp) %>% which %>% head(1) 
     # for the start of winter (which occurs at end of year)
     # guarding against cold spells making a false start of winter 
+   
+    # IF it ever gets so hot that there's no day less than 10 
+    if(identical(startpoint,integer(0))){
+
+        startpoint <- length(tempArray) } 
 
     # repeat until 5 days days following days also below the winter threshold
     # keep looping to find a correct stretch so long as all 5 are NOT winter temperatures 
@@ -388,7 +399,7 @@ get.Range2 <- function(tempArrayOG){
         startpoint <- (range5)[checkpoint]+1
 
         # and if you hit the end of the series, finding nothing, then stop
-        if(startpoint == length(tempArray)) break
+        if(startpoint >= length(tempArray)) break
 
     }
 
@@ -398,7 +409,7 @@ get.Range2 <- function(tempArrayOG){
     endpoint <- (startpoint-1) + (tempArray[startpoint:length(tempArray)] > winterTemp) %>% which %>% head(1)
 
     # if there's no start of winter, then log a negligble day
-    if(identical(endpoint,numeric(0))){
+    if(identical(endpoint,numeric(0)) | endpoint-startpoint < 4){
 
         tempArray <- 0
         startpoint <- 1
@@ -513,6 +524,12 @@ get.winterOrdinal2 <- function(tempData, begin){
 
     endDay <- 200 + indices[2] - 365
 
+    # void these values for cases where it's so hot that there's no start of winter
+    if (endDay < 0) {
+        startDay <- NA
+        endDay <- NA
+        
+    }
     # return the ordinal dates for start of winter and end of winter (next year)
     return(c(startDay,endDay))
 
@@ -578,7 +595,7 @@ w.dates.future <- function(modelSeries, years){
     # loop
     for (year in years) {
 
-        future.winters <- rbind(future.winters, sapply( modelSeries, function(tribmodel){get.winterOrdinal(tribmodel, which(tribmodel$year == year)[200] )}) %>% rowMeans %>% round)
+        future.winters <- rbind(future.winters, sapply( modelSeries, function(tribmodel){get.winterOrdinal2(tribmodel, which(tribmodel$year == year)[200] )}) %>% rowMeans(na.rm = T) %>% round)
 
     }
 
@@ -657,62 +674,14 @@ timeDat.SG <- data.frame(
 # — — — — — — — — — — — — — — — — — — — — — — — — — — — — — — — — — — — — — — —
 # for first year life history line 
 
-# for this instance (genesee 2016 model 5)
-# GDD is fully accrued before spawning temps are reached
-# and not every day in the spawning period is suitable
-
-modelSeries <- trib.mods$gen[[5]]
-aYear <- 2016
-get.spawning(modelSeries[which(modelSeries$year == aYear),])
-
-# gdd ordinal date achieved
-get.gdd(modelSeries[which(modelSeries$year == aYear),])
-# [1] 144
-
-# winter start and end ordinal
-get.winterOrdinal(modelSeries[366:1096,], 200)
-# [1] 334 104
-
-# make a copy to get the gradient of GDD progress
-gddArray <- (modelSeries[which(modelSeries$year == aYear),])
-
-# zero out the temperatures below base
-gddArray[gddArray[,2] < baseTemp, 2]  <- 0
-
-# save the final GDD gradient, ending on the date of accrual
-gddArray <- (gddArray[,2] %>% cumsum)[1:144]
-
-# for plotting
-gddArray <- data.frame(ordinal = 1:(gddArray %>% length), gdd = gddArray)
-
-# tack on the rest of the time sereis as unchanged, for plotting
-gddArray <- rbind(gddArray, data.frame(ordinal = 145:469, gdd = 639))
-
-# — — — — — — — — — — — — — — — —
-# alternatively: plot the temp series itself
-
 library(scales)
 
-# the temp series matching the right dates
-gddArray <- modelSeries[366:(366+365+104),1:2]
-
-# reset the index / row numbers
-row.names(gddArray) <- NULL
-
-# make the ordinals part of a continuous day count up
-gddArray[366:470,1] <- gddArray[366:470,1] + 365
-
-# fix column names
-names(gddArray) <- c("ordinal", "temp")
-
-# — — — — — — — — — — — — — — 
-# alternative: use baseline data cause GCM data is too variable (looks bad)
-# using genesee 2011 again 
+# using genesee 2011 baseline temperature series 
 
 dat <- s.temp
 dat2 <- baseline[[3]]
+# winter dates for just the first year of St Louis baseline (2012)
 gdd.dates <- get.winterOrdinal2(dat, 200)
-
 
 # grab the whole year and into the next one
 gddArray <- dat[1:(365+gdd.dates[2]+5),1:2]
@@ -739,10 +708,11 @@ gdd.col <- rbind(gdd.col, data.frame(ordinal = 1+length(gdd.col[,1]):(364+gdd.da
 # combine the temp series with the gdd calculation
 gddArray <- cbind(gddArray, gdd = gdd.col[,2])
 
-# important dates
+# important dates (spawn start and end)
 get.spawning(gddArray[,1:2])[1]
 get.spawning(gddArray[,1:2]) %>% tail(1)
 
+# 633 accrual date
 get.gdd(gddArray)
 
 # winter dates
@@ -754,12 +724,24 @@ gdd.dates
 # this is st louis baseline 2012
 library(ggridges)
 
+# dates when colors should start to ramp up and then stop
+startGDD <- which(gddArray$gdd > 0)[1]
+finishGDD <- which(gddArray$gdd >= 633)[1]
+
 # force steady increase in GDD to see if it'll fix color gradient problem
-gddArray[133:175,3] <- seq(15, 640, length.out = 43)
+gddArray[startGDD:finishGDD,3] <- seq(gddArray$gdd[startGDD] %>% round, 
+                                      gddArray$gdd[finishGDD] %>% round,
+                                      length.out = length(startGDD:finishGDD)
+)
 # plot(gddArray$gdd ~ gddArray$ordinal) # check that
 
-# fixing the gdd values to have stable colours in rest of year 
-gddArray[176:504,3] <- 650
+# making the rest of the gdd values have stable colours in rest of year 
+gddArray[-(1:finishGDD),3] <- gddArray$gdd[finishGDD] %>% round
+
+# smoothing the ramp in  ( doesn't really do anything)
+#firstGDD <- gddArray[startGDD, 3] # the first GDD value
+## incremental smoothing from 0 to that first value
+#gddArray[(startGDD-firstGDD):startGDD, 3] <-  seq(0,firstGDD)
 
 # plot(gddArray$gdd ~ gddArray$ordinal)
 
@@ -802,19 +784,22 @@ fig1a <- ggplot(gddArray, aes(x = ordinal, height = temp, y = 0, fill = gdd)) + 
     geom_segment(aes(x=174, xend=160, y=24, yend=30), size = 0.3, color = "gray50") +
     geom_segment(aes(x=176, xend=179, y=19.5, yend=33), size = 0.3, color = "gray50") +
     #geom_segment(aes(x=179, xend=199, y=26, yend=32), size = 0.3, color = "gray50") +
-    geom_segment(aes(x=278, xend=280, y=11, yend=21), size = 0.3, color = "gray50") +
+    geom_segment(aes(x=282, xend=288, y=11, yend=21), size = 0.3, color = "gray50") +
     #geom_segment(aes(x=278, xend=264, y=15, yend=30), size = 0.3, color = "gray50") +
     geom_segment(aes(x=440, xend=444, y=19, yend=15), size = 0.3, color = "gray50") +
     geom_segment(aes(x=497, xend=444, y=11, yend=15), size = 0.3, color = "gray50") +
-    geom_text(label="15°C", aes(x=150, y=10), size = 3, color = "white") +
-    geom_text(label="18°C", aes(x=215, y=14), size = 3, color = "white") +
-    geom_text(label="10°C", aes(x=390, y=6), size = 3, color = "black") +
-    geom_text(label="Maturation", aes(x=84, y=24), size = 3, color = "black") +
-    geom_text(label="Spawning", aes(x=122, y=28), size = 3, color = "black") +
-    geom_text(label="Larval drift", aes(x=152, y=33), size = 3, color = "black") +
-    geom_text(label="Hatch, growth begins", aes(x=207, y=36), size = 3, color = "black") +
-    geom_text(label="Growth ends, winter begins", aes(x=305, y=24), size = 3, color = "black") +
-    geom_text(label="Winter ends, growth resumes", aes(x=450, y=23), size = 3, color = "black")
+    annotate("text", label="15°C", x=150, y=10, size = 3, color = "white") +
+    annotate("text", label="18°C", x=215, y=14, size = 3, color = "white") +
+    annotate("text", label="10°C", x=390, y=6, size = 3, color = "black") +
+    annotate("text", label="Maturation", x=84, y=24, size = 3, color = "black") +
+    annotate("text", label="Spawning", x=122, y=28, size = 3, color = "black") +
+    annotate("text", label="Larval drift", x=152, y=33, size = 3, color = "black") +
+    annotate("text", label="Hatch, growth begins", x=207, y=36, size = 3, color = "black") +
+    annotate("text", label="Growth ends, winter begins", x=305, y=24, size = 3, color = "black") +
+    annotate("text", label="Winter ends, growth resumes", x=450, y=23, size = 3, color = "black")
+
+
+
 
     #geom_vline(xintercept=get.spawning(gddArray)[1], color = "black", linetype = "solid", size=0.7) 
     #geom_vline(xintercept=gdd.dates[1], color = "white", linetype = "dotted", size=0.7) +
@@ -851,7 +836,7 @@ timeDat.o <- data.frame(
 ) %>% melt
 
 # add label (for the winter start ordinal date in the next year)
-timeDat.o <- cbind(timeDat.o, label = c(173, 232, 271, 300, 76))
+timeDat.o <- cbind(timeDat.o, label = c(timeDat.o$value[1], timeDat.o$value[2], timeDat.o$value[3], timeDat.o$value[4], timeDat.o$value[5]-365))
 
 # !! below not actually needed because they seem to spawn every day within the period
 # even if it's theoretically possible that they wouldn't, due to temp flux
@@ -888,8 +873,8 @@ top.time <- ggplot(timeDat.o,aes(x=value,y=as.numeric(period), col=variable, lab
                  #legend.direction = "horizontal"
                 ) +
     geom_hline(yintercept=0, color = "gray50", linetype = "dotted", size=0.4) + 
-    geom_segment(aes(x=173,xend=271,y=0, yend=0), color = "#D25471") +
-    geom_segment(aes(x=300,xend=441,y=0, yend=0), color = "#171387") +
+    geom_segment(aes(x=timeDat.o$value[1],xend=timeDat.o$value[3],y=0, yend=0), color = "#D25471") +
+    geom_segment(aes(x=timeDat.o$value[4],xend=timeDat.o$value[5],y=0, yend=0), color = "#171387") +
     #geom_vline(aes(xintercept=365), linetype="dashed", size=0.75) +
     #geom_vline(aes(xintercept=152), linetype="dashed", size=0.75) +
     geom_point(aes(shape = variable), size=3) +
@@ -913,8 +898,8 @@ top.time <- ggplot(timeDat.o,aes(x=value,y=as.numeric(period), col=variable, lab
     geom_segment(aes(x=160, xend=204,y=0.75, yend=0.12), color = "gray50", size = 0.4) +
     geom_segment(aes(x=253, xend=263,y=0.12, yend=0.12), color = "gray50", size = 0.4) +
     geom_segment(aes(x=230, xend=253,y=0.5, yend=0.12), color = "gray50", size = 0.4) +
-    geom_segment(aes(x=308, xend=323,y=0.12, yend=0.12), color = "gray50", size = 0.4) +
-    geom_segment(aes(x=323, xend=370,y=0.12, yend=0.75), color = "gray50", size = 0.4) +
+    geom_segment(aes(x=312, xend=323,y=0.12, yend=0.12), color = "gray50", size = 0.4) +
+    geom_segment(aes(x=323, xend=376,y=0.12, yend=0.75), color = "gray50", size = 0.4) +
     geom_segment(aes(x=447, xend=457,y=0.12, yend=0.12), color = "gray50", size = 0.4) +
     geom_segment(aes(x=457, xend=520,y=0.12, yend=1), color = "gray50", size = 0.4) +
     geom_text(aes(x=-30,y=1.9,label="Pre-spawning period:\nMonitor for aggregations"),
@@ -940,16 +925,15 @@ top.time <- ggplot(timeDat.o,aes(x=value,y=as.numeric(period), col=variable, lab
 timeDat.n <- timeDat[1:3,] %>% melt
 # add column for the ordinal date labels (for following year's winter end)
 timeDat.n <- cbind(timeDat.n,
-                 #label = c(228, 182, 160, NA, 208, 240, 246, 270, 288, 292, 291, 311, 168, 160, 102))
                    label = c(timeDat.n$value[-(13:15)], timeDat.n$value[13:15]-365) )
 # plot position adjustment column
 timeDat.n <- cbind(timeDat.n,
-                 adjust = c(1,1,1,
-                            -0.2,0.2,0.8,
-                            0.2,0.8,0.8,
-                            -0.1,-0.1,-0.1,
-                            0.4,0.4,0.4
-                            ))
+                   adjust = c(1,1,1,
+                              -0.2,0.2,0.8,
+                              0.2,0.8,0.8,
+                              -0.1,-0.1,-0.1,
+                              0.4,0.4,0.4
+                              ))
 
 
 # !! NOTICE
@@ -986,10 +970,9 @@ nip.time <- ggplot(timeDat.n,aes(x=value,y=as.numeric(period), col=variable, lab
     geom_text(aes(label = label, hjust = adjust, vjust=-0.95), size = 3) +
     geom_text(data=month, aes(x=ordinal,y=-2.2,label=name),
               size=3, hjust=1, color='black', angle=90) +
-     geom_text(aes(x=-2,y=0, hjust=0, vjust=-0.56, label = "Baseline"), color = "gray50", size = 3) +
-     geom_text(aes(x=-2,y=-1, hjust=0, vjust=-0.5, label = "2050"), color = "gray50", size = 3) +
-     geom_text(aes(x=-2,y=-2, hjust=0, vjust=-0.5, label = "2100"), color = "gray50", size = 3) 
-
+     annotate("text",x=-2,y=0, hjust=0, vjust=-0.56, label = "Baseline", color = "gray50", size = 3) +
+     annotate("text",x=-2,y=-1, hjust=0, vjust=-0.5, label = "2050", color = "gray50", size = 3) +
+     annotate("text",x=-2,y=-2, hjust=0, vjust=-0.5, label = "2100", color = "gray50", size = 3) 
 
 # repeat for vermillion    
     
@@ -1002,7 +985,7 @@ timeDat.v <- cbind(timeDat.v,
 # plot position adjustment column
 timeDat.v <- cbind(timeDat.v,
                  adjust = c(0.4,0.4,0.4,
-                            1, 1, 1,
+                            0.7, 0.7, 0.7,
                             0.7, 1, 1,
                             -0.1, -0.1, 0.2,
                             0.4, 0.4, 0.1
@@ -1073,6 +1056,128 @@ ggsave(plot = all.time, filename = "timelines.png", path = "../graphics", bg = "
 #ggsave(plot = all.time, filename = "timelines.eps", path = "../graphics", device = cairo_ps, bg = "white", width = 9, height = 6, fallback_resolution = 600)
 
 
+# ------------------------------------------------------------------------------
+
+# with panel D added, that shows management changes with climate change
+# honestly, this is clear enough I thought with the previous panels
+# showing changes from 2050 to 2100
+
+# source dates from variable: all.dates
+
+timeDat.g2 <- all.dates[7:8,] %>% melt
+timeDat.g2 <- cbind(timeDat.g2, label = timeDat.g2$value)
+timeDat.g2$value[9:10] <- timeDat.g2$label[9:10]+365
+timeDat.g2 <- cbind(timeDat.g2,
+                 adjust = c(0.4,0.4, 0.5,0.5, 0.5,1, 0.4,-0.1, 0.4,0.4),
+                 v.adjust = c(-0.95,1.95, -0.95,1.95, -0.95,1.95, -0.95,1.95, -0.95,1.95)
+)
+timeDat.g2$year <- c(-0.15,-0.9)
+
+
+last.time <- ggplot(timeDat.g2,aes(x=value,y=as.numeric(year), col=variable, label=label)) +
+    ylim(-2,1) + 
+    theme_classic() +
+    theme(axis.line.y=element_blank(),
+                 axis.text.y=element_blank(),
+                 axis.title.x=element_blank(),
+                 axis.title.y=element_blank(),
+                 axis.ticks.y=element_blank(),
+                 axis.text.x =element_blank(),
+                 axis.ticks.x =element_blank(),
+                 axis.line.x =element_blank(),
+                 legend.title = element_blank(),
+                 legend.key.height = unit(0.4, 'cm'), #change legend key height
+                 legend.key.width = unit(1, 'cm'),
+                 legend.text = element_text(size=8), #change legend text font size
+                 legend.position = c(.90,.88),
+                 #legend.position = "none",
+                 plot.margin = unit(c(0, 0, 0, 0.1), "cm")
+                ) +
+    geom_hline(yintercept=-0.15, color = "gray50", linetype = "dotted", size=0.4) + 
+    geom_hline(yintercept=-0.9, color = "gray50", linetype = "dotted", size=0.4) + 
+    geom_segment(aes(x=value[1], xend=value[5],  y=-0.15, yend=-0.15), color = "#D25471") +
+    geom_segment(aes(x=value[2], xend=value[6],  y=-0.9, yend=-0.9), color = "#D25471") +
+    geom_segment(aes(x=value[7], xend=value[9], y=-0.15, yend=-0.15), color = "#171387") +
+    geom_segment(aes(x=value[8], xend=value[10], y=-0.9, yend=-0.9), color = "#171387") +
+    geom_point(aes(shape = variable), size=3) +
+    scale_shape_manual(values = c("spawnDaysRange1" = 20,
+                                         "lastBday" = 4,
+                                  "spawnDaysRange2" = 20,
+                                          "w.start" = 18,
+                                          "w.end"   = 18), 
+                       breaks = c("spawnDaysRange1","lastBday","w.start"), 
+                       labels = c("Spawning Period", "Last Effective Spawn", "Winter Period")
+                       ) +
+    scale_color_manual(values = c("spawnDaysRange1" = "#D25471",
+                                         "lastBday" = "#FAA543",
+                                  "spawnDaysRange2" = "#D25471",
+                                          "w.start" = "#171387",
+                                          "w.end"   = "#171387"),
+                       breaks = c("spawnDaysRange1","lastBday","w.start"), 
+                       labels = c("Spawning Period", "Last Effective Spawn", "Winter Period")
+                       ) +
+    geom_text(aes(x=-2,y=-0.15, hjust=0, vjust=-0.56, label = "Baseline"), color = "gray50", size = 3) +
+    geom_text(aes(x=-2,y=-0.9, hjust=0, vjust=1.5, label = "2050"), color = "gray50", size = 3) +
+    # just to check if the axis is accurate
+    #geom_vline(aes(xintercept=1), linetype="dashed", size=0.75) +
+    #geom_vline(aes(xintercept=365), linetype="dashed", size=0.75) +
+    geom_text(aes(label = label, hjust = adjust, vjust=v.adjust), size = 3, show_guide = F) +
+    geom_text(data=month, aes(x=ordinal,y=-0.35,label=name),
+              size=3, hjust=1, color='black', angle=90) 
+
+
+
+    # labels and such
+#    geom_segment(aes(x=35, xend=151, y=0.5, yend=-0.08), color = "gray50", size = 0.4) 
+#    geom_segment(aes(x=-15, xend=-15,y=1.5, yend=1.65), color = "gray50", size = 0.4) +
+#    geom_segment(aes(x=146, xend=166,y=0.12, yend=0.12), color = "gray50", size = 0.4) 
+#    geom_segment(aes(x=80, xend=146,y=1, yend=0.12), color = "gray50", size = 0.4) +
+#    geom_segment(aes(x=204, xend=224,y=0.12, yend=0.12), color = "gray50", size = 0.4) +
+#    geom_segment(aes(x=160, xend=204,y=0.75, yend=0.12), color = "gray50", size = 0.4) +
+#    geom_segment(aes(x=253, xend=263,y=0.12, yend=0.12), color = "gray50", size = 0.4) +
+#    geom_segment(aes(x=230, xend=253,y=0.5, yend=0.12), color = "gray50", size = 0.4) +
+#    geom_segment(aes(x=308, xend=323,y=0.12, yend=0.12), color = "gray50", size = 0.4) +
+#    geom_segment(aes(x=323, xend=370,y=0.12, yend=0.75), color = "gray50", size = 0.4) +
+#    geom_segment(aes(x=447, xend=457,y=0.12, yend=0.12), color = "gray50", size = 0.4) +
+#    geom_segment(aes(x=457, xend=520,y=0.12, yend=1), color = "gray50", size = 0.4) +
+#    geom_text(aes(x=-30,y=1.9,label="Pre-spawning period:\nMonitor for aggregations"),
+#              color='black', hjust = 0, size = 3.5, family = "serif") +
+#    geom_text(aes(x=40,y=1.5,label="Spawning begins:\nTarget aggregating adults, and youngest life stages"),
+#              color='black', hjust = 0, size = 3.5, family = "serif") +
+#    geom_text(aes(x=122,y=1,label="Last effective spawn:\nNot necessary to prevent further spawning"),
+#              color='black', hjust = 0, size = 3.5, family = "serif") +
+#    geom_text(aes(x=202,y=0.6,label="Spawning ends: target largest YOY"),
+#              color='black', hjust = 0, size = 3.5, family = "serif") +
+#    geom_text(aes(x=355,y=1,label="Winter begins:\nTarget adults"),
+#              color='black', hjust = 0, size = 3.5, family = "serif") +
+#    geom_text(aes(x=460,y=1.2,label="Winter ends:\nTarget surviving young-of-year"),
+#              color='black', hjust = 0, size = 3.5, family = "serif")
+#
+
+
+# alternate final combo-plot, with the requested managment change plot below
+four.time <- plot_grid(fig1a,
+                      both.time,
+                      last.time,
+                      labels = c('a', 'b', 'c'),
+                      ncol = 1,
+                      rel_heights = c(0.25,0.35,0.4)
+)
+
+
+
+# save plot
+ggsave(plot = four.time, filename = "allTimelines.png", path = "../graphics", bg = "white", width = 9, height = 5)
+
+
+
+
+
+
+
+
+
+
 # ===== making a two timeline plot for St. Louis and Genesee =====================
 # as per revisions
  
@@ -1086,7 +1191,7 @@ timeDat.s <- cbind(timeDat.s,
                    label = c(timeDat.s$value[-(13:15)], timeDat.s$value[13:15]-365) )
 # plot position adjustment column
 timeDat.s <- cbind(timeDat.s,
-                 adjust = c(1.2, 0.8, 0.4,
+                 adjust = c(0.8, 0.8, 0.4,
                             0.7, 1, 1,
                             0.7, 1, 1,
                             -0.1, -0.1, 0.2,
@@ -1125,9 +1230,10 @@ slou.time <- ggplot(timeDat.s,aes(x=value,y=as.numeric(period), col=variable, la
     geom_text(aes(label = label, hjust = adjust, vjust=-0.95), size = 3) +
     geom_text(data=month, aes(x=ordinal,y=-2.2,label=name),
               size=3, hjust=1, color='black', angle=90) +
-     geom_text(aes(x=-2,y=0, hjust=0, vjust=-0.56, label = "Baseline"), color = "gray50", size = 3) +
-     geom_text(aes(x=-2,y=-1, hjust=0, vjust=-0.5, label = "2050"), color = "gray50", size = 3) +
-     geom_text(aes(x=-2,y=-2, hjust=0, vjust=-0.5, label = "2100"), color = "gray50", size = 3) 
+     annotate("text",x=-2,y=0, hjust=0, vjust=-0.56, label = "Baseline", color = "gray50", size = 3) +
+     annotate("text",x=-2,y=-1, hjust=0, vjust=-0.5, label = "2050", color = "gray50", size = 3) +
+     annotate("text",x=-2,y=-2, hjust=0, vjust=-0.5, label = "2100", color = "gray50", size = 3) 
+
 
 
 # repeat for Genesee    
@@ -1224,8 +1330,6 @@ nip.trio <- rbind(
                   nip.late <- cbind(nip.late, Period = "Late-century")
 )
 
-
-
 # for st louis
 slou.base <- aggregate(tas~j.date,
                       subset(waterC, gcm == "base" & tributary == "slou", select = -c(tributary, gcm, year)),
@@ -1305,11 +1409,19 @@ tempFig.A <- ggplot(nip.trio, aes(x=j.date, y=tas, col=Period)) +
                    axis.text.x =element_blank(),
                    #axis.ticks.x =element_blank(),
                    #axis.line.x =element_blank(),
-                   legend.position = "none",
+                   legend.position = c(.15,.7),
+                   legend.title = element_blank(),
+                   legend.text = element_text(size = 8),
+                   legend.key.size = unit(0.5, "cm"), # to change line spacing in the legend
+                   legend.key = element_rect(color= NA, fill = "transparent"), # for transparent legend background fill
+                   legend.spacing.x = unit(0.05, 'cm'),
+                   legend.spacing.y = unit(0.05, 'cm'),
                    plot.margin = unit(c(0, 0, 0, 0.1), "cm")
                    ) +
-             geom_line() +
-             scale_color_manual(values=c("#FCA409FF", "#C43C4EFF", "#E45A32FF"))
+            geom_line() +
+             scale_fill_discrete() +
+             scale_color_manual( values=c("#C43C4EFF", "#E45A32FF", "#FCA409FF"),
+                                 breaks=c("Late-century", "Mid-century", "Baseline") ) 
 # st louis 
 tempFig.B <- ggplot(slou.trio, aes(x=j.date, y=tas, col=Period)) +
              ylim(-1,35) + 
@@ -1367,7 +1479,7 @@ fourTemps <- plot_grid(tempFig.A, tempFig.B, tempFig.C, tempFig.D,
                        label_size = 11,
                        label_fontface = "bold",
                        label_x = 0.80, 
-                       label_y = 0.9, 
+                       label_y = 0.98, 
                        align="v", 
                        ncol = 1,
                        nrow = 4)
